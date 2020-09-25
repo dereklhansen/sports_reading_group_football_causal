@@ -51,10 +51,10 @@
     \tableofcontents[currentsection]
   \end{frame}
 }
-\title{Attentive Neural Processes}
+\title[Causal Inference in NFL]{What was lost? \\ A causal estimate of fourth down behavior in the National Football League \footnote{https://doi.org/10.3233/JSA-190294}}
 \author[Derek Hansen]{Discussant: Derek Hansen}
-\institute[UM Statistics]{\st{Probabilistic Machine Learning Reading Group} \\ \st{Applied Bayesian Reading Group} \\ {Computational Bayes Reading Group} \\ University of Michigan Department of Statistics}
-\date{September 21, 2020}
+\institute[UM Statistics]{Sports Reading Group \\ University of Michigan Department of Statistics}
+\date{September 25, 2020}
 \begin{document}
 
 \frame{\titlepage}
@@ -67,275 +67,212 @@
   \includegraphics[width=\linewidth]{./motivating_example.png}
 \end{frame}
 
+% \begin{frame}
+%   \frametitle{Overview}
+%   \tableofcontents
+% \end{frame}
 \begin{frame}
-  \frametitle{Overview}
-  \tableofcontents
-\end{frame}
-
-\section{Neural Processes}
-
-\begin{frame}
-  \frametitle{Neural Process}
+  \frametitle{Background}
   \begin{itemize}
-   \item We observe data $(x_i, y_i)$ where $x_i \in \mathbb R^{d_x}$ is a feature vector and $y_i \in \mathbb R^{d_y}$ is a label.
-  \item The goal of the Neural Process is to learn a conditional distribution $p(y_i | x_i, r_C)$, where $i \in T$ is a member of the target set.
-  \item The term $r_C \in \mathbb R^d$ parameterizes the conditional distribution. 
-  \item $r_C$ is a finite-dimensional representation which is the output of a permutation-invariant function $r$:
-    \[r_C \triangleq r\left( \{(x_j, y_i) | j \in C\} \right)\]
-  \item $C$ is called the context set
-  \item Generally $C \subset T$, so the goal is to use a subset of observations of a functional process to predict all points in the target set.
+  \item In American football, attempting to convert on fourth-down rather than
+    punting or kicking a field-goal is a classic high-risk, high-reward
+    decision.
+    \item Successful conversion keeps possession and gives the team a chance to score a touchdown
+    \item A failed conversion surrenders possession at the current spot on the field, which puts the opposing team in a good position to score.
+    \item Did Bill Belichick make the right decision against the Colts in 2009?
   \end{itemize}
+\end{frame}
 
+% \begin{frame}
+%   \frametitle{Introduction}
+%   \begin{itemize}
+% \item Unlike in Madden, going for it on fourth down every time is reckless because the risk-reward ratio changes depending on the game scenario, the yards to go, and the position on the field
+%   \item If you're losing late in the fourth quarter, makes sense to go for it.
+%   \item If you're close to your own endzone, you risk giving the opponent an easy score
+%   \item If you're past the 50 yard line but too far for an easy field goal, going for it makes sense because a punt won't improve field position that much and a missed field goal is worse than going for it and not converting.
+% \end{itemize}
+% \end{frame}
+
+
+\begin{frame}
+  \frametitle{Overview of Paper}
+  \begin{itemize}
+  \item Previous studies in literature suggest NFL coaches are risk-averse and do not attempt to convert on fourth-down enough.
+  \item The New York Times has a 4th Down Bot that gives real-time suggestions on whether a team should attempt to convert or not.
+  \item This study focused on plays that the 4th Down Bot said to go for it  \item This study used a matching algorithm based on propensity scores to estimate the difference in win probability if teams had gone for it instead.
+   \item They find that the win probability increased in expectation, but also an increase in variance due to a bimodal distribution (confirming the high-risk, high-reward of going for it)
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Neural Process - generative model}
+  \frametitle{Past studies}
   \begin{itemize}
-  \item The latent variable $z$ captures global uncertainty in the functional relationship between $x$ and $y$.
+  \item Carter and Machol (1978): Teams kick too many field goals (based on
+    expected points framework)
+  \item Romer (2006): Found that teams were not aggressive enough on fourth down (expected points)
+  \item Burke and Quealy (2013): Expanded Romer (2006); authors helped create the NYT's ``4th Down Bot''
+  \item Causey et al (2015): Expanded Burke and Qualy to use more data and changed from expected points to win probability in cross-validated logistic regression
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Coachs' Opinions}
+  \begin{itemize}
+  \item Despite empirical evidence mostly suggesting coaches are overly conservative, there is no known evidence that coaches' have modified their behavior since 2006.
+  \includegraphics[width=\linewidth]{./cowher.png}
+\item ``Analytics is not really my thing. I just try to evaluate what I see.'' - Bill Belichick \footnote{https://www.boston.com/sports/new-england-patriots/2019/09/27/bill-belichick-analytics-patriots-bills}
+\item Belichick was also asked how much of a role analytics plays in his decision-making process, specifically in regards to two-point conversions and going for it on fourth down. Belichick responded, “less than zero.”
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Model}
+  \begin{itemize}
+  \item Each observation is a play where the 4th Down Bot suggests to go for it.
+  \item $Y_i$ is the potential change in win probability \footnote{As determined by a pre-trained model discussed in the Appendix. They tried two different models: random forest and GAM.} for the team on offense.
+    \begin{itemize}
+    \item $Y_i(1)$ is the change in win probability if the team goes for it. (Treatment)
+    \item $Y_i(0)$ is the change in win probability if the team opts to kick or punt. (Control)
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Data}
+  \begin{itemize}
+  \item Data from ArmchairAnalysis.com from 2004 through 2016.
+  \item $n=13,172$ fourth downs identified where teams should have gone for it.
+  \item $9,348$ teams ($71.0\%$) did not go for it (i.e. the control group), and $3,824$ teams did go for it (i.e. the treatment group)
+  \item Removed plays on which a penalty occured.
+  \item https://github.com/statsbylopez/nfl-fourth-down for code (although data is behind paywall)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Model covariates used in win-probability model}
+  \centering \includegraphics[width=0.8\linewidth]{./covariates_wp.png}
+\end{frame}
+\begin{frame}
+
+  
+  \frametitle{Model- Causal Inference Assumptions}
+  \begin{itemize}
+  \item Stable unit treatment value assumption (SUTVA) is reasonable for this model
+    \begin{itemize}
+    \item The potential outcome $Y_i$ does not vary based on treatments assigned to other subjects.
+    \item There is no hidden variation of treatment (``decision to go for it is made prior to any play'').
+    \end{itemize}
+  \item $W_i$ is the assignment of treatment.
+  \item $Y_i^{obs} = Y_i(W_i)$ is the observed outcome, $Y_i^{mis} = Y_i(1-W_i)$ is the missing outcome.
+   \item $X_i$ are covariates associated with play $i$ (shown in a few slides)
+   \item Assume \(P(W_i = 0 | X_i) > 0\) and \(P(W_i=1 | X_i) > 0\).
+    \item \textbf{Ignorability}: $P(W | X, Y_i(0), Y_i(1)) = P(W | X)$.
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Average and Team-specific total treatment effects}
+  \begin{itemize}
+  \item The Average Treatment effect on the Control (ATC) is defined when $W_i = 0$. 
     \[
       \begin{split}
-      p(y_i | x_i, \{(x_j, y_j) | j \in C\}) &= \int p_y(y_i | x_i, r_C, z) d p_z(z | \{(x_j, y_j) | j \in C\}) \\ 
-      &= \int p_y(y_i | x_i, r_C, z) d p_z(z | s_C) \\
-      s_C &= s( \{(x_j, y_j) | j \in C\}) 
+      ATC_i &= Y_i^{mis} - Y_i^{obs} = Y_i(1) - Y_i(0) \\
+      ATC  &= \frac 1 {N_c} \sum_{W_i=0} ATC_i\\
     \end{split}
   \]
-\item $s$ is another permutation-invariant function similar to $r$.
-\item $p_z$ is referred to as the decoder \footnote{This is called $q$ in the ANP paper, but I'm not a fan of this notation.}, and $p_y$ is referred to as the encoder.
-\item Allows for independent realizations of functions to be estimated together.
-  \end{itemize}
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{Neural Process - inference}
-  \begin{itemize}
-  \item For inference, we pick a variational distribution for the latent $z$ which can depend on the entire target set.
-    \[
-      \begin{split}
-      q(z | \{(x_i, y_i) | i \in  T\}) &= q(z | s_T) \\
-                                        &\triangleq p_z(z | s_T)
-                                      \end{split}
-      \] where $s_T \triangleq s(\{(x_i, y_i) | i \in T\})$
-  \item We then maximize the ELBO:
-    \[
-      \begin{split}
-        &\mathbb E_{q(z | s_T)} (\sum_{i \in T} \log p_y(y_i | x_i, r_C, z) p_z(z | s_C)) - \mathbb E_{q(z | s_T)} \log q(z | s_T)\\
-        &= \sum_{i \in T} \mathbb E_{q(z | s_T)} \log p_y(y_i | x_i, r_C, z) + \mathbb E_{q(z|s_T)} \log p_z(z|s_C) \\
-        &-  \mathbb E_{q(z | s_T)} \log q(z | s_T)\\
-        &= \sum_{i \in T} \mathbb E_{q(z | s_T)} \log p_y(y_i | x_i, r_C, z) - D_{\mathrm{KL}} (q(z|s_T) \| p_z(z | s_C)) 
-   \end{split}
-    \]
-                                    
-  \end{itemize}
- \end{frame}
-
- \begin{frame}
-   \frametitle{Neural Process - visualization}
-   % \begin{figure}
-   %   \centering
-   \includegraphics[width=\linewidth]{./anp/np_dag.png}
-   % \caption{Taken from Garnelo et al. 2018}
-   % \end{figure}
-   \centering From Garnelo et al. 2018.
-   \begin{itemize}
-   \item Note: In the original Neural Process, the predictions only depend on the
-     context set through the latent $z$. ($r_C$ and $r_T$ above would read $s_C$ and $s_T$ in our current formulation)
-   \end{itemize}
- \end{frame}
-
- 
- \begin{frame}
-   \frametitle{Neural Process - training}
-   \begin{itemize}
-   \item During training, the selection of the context set $C$ is randomized as well.
-   \item Hence, the Neural Process does not present a fully generative model for all observed labels $Y_i$.
-     Instead, it is a conditional model.
-   \item This means that the learned data-generating process is not consistent. The learned conditional models do not follow the rules.
-    \item Example: Suppose we have three observed data-points $(x_i, y_i), i = 1,2,3$.
-     \[
-       \begin{split}
-         &p_\theta((y_3, y_2) | x_3, x_2, \{(x_1, y_1)\}) \ne \\
-         &p_\theta(y_3 | x_3, \{(x_1, y_1), (x_2, y_2)\}) p_\theta(y_2 | x_2, \{(x_1, y_1)\})
+ \item The Total Treatment effect on the Control for team $f$ ($TTF_f$) is:
+   \[
+     \begin{split}
+       TTC_f = \sum_{i: W_i = 0} ATC_i 1[F_i = f]
      \end{split}
    \]
-   \item This breaks Bayes' rule that $P(y_3, y_2 | y_1) = P(y_3 | y_2, y_1) P(y_2 | y_1)$.
-   \end{itemize}
- \end{frame}
-
-\section{Attention and self-attention}
+   where $f = 1, \dots, 32$ are NFL teams and $F_i$ is the team on offense for play $i$.
+  \end{itemize}
+\end{frame}
 
 \begin{frame}
-  \frametitle{Attention (Scaled Dot-Product)}
+  \frametitle{Propensity scores}
   \begin{itemize}
-  % \item In computer science, a dictionary is a structure which maps \textbf{keys} to \textbf{values}.
-  \item An attention mechanism has three main ingredients:
-    \begin{itemize}
-    \item Query: $Q=[q_1 | \dots | q_{d_q}]^\top$
-    \item Key : $K=[k_1 | \dots | q_{d_k}]^\top$
-      \item Value $V=[v_1 | \dots | v_{d_k}]^\top$
-    \end{itemize}
-  \item $\mathrm{Attention}(Q, K, V) = \mathrm{softmax} \left( \frac{QK^\top}{\sqrt{d_k}} \right)V$.
-  \item $\mathrm{softmax} \left( \begin{bmatrix} x_{1,1} & \dots & x_{1, n} \\ \vdots & \ddots & \vdots \\ x_{m, 1} & \dots & x_{m,n} \end{bmatrix} \right) = \begin{bmatrix} \frac{\exp(x_{1,1})}{\sum_{i=j}^n \exp(x_{1, j})} & \dots & \frac{\exp(x_{1, n})}{\sum_{j=1}^n\exp(x_{1, j})} \\ \vdots & \ddots & \vdots \\ \frac{\exp(x_{m, 1})}{\sum_{i=1}^m \exp(x_{m, j})} & \dots & \frac{\exp(x_{m,n})}{\sum_{j=1}^n \exp(x_{m, j})} \end{bmatrix}$
-  \item Let $X \triangleq \mathrm{softmax} (QK^\top / \sqrt {d_k})$. Let $Y = XV$
-    \begin{itemize}
-    \item $Y_{i, \cdot} = \sum_{j=1}^{d_k} X_{i, j} V_{\cdot, j}$ is the output vector corresponding to query $q_i$.
-    \item If a query vector $q_i$ and a key vector $k_j$ have a high dot-product, then $X_{i,j}$ is higher.
-    \item Hence the output $Y_{i, \cdot}$ will place more weight on values of $v_j$ whose corresponding key has a higher dot-product with the query.
-    \end{itemize}
-    \end{itemize}
-  \end{frame}
-
-  \begin{frame}
-  \frametitle{Self-Attention}
-  \begin{itemize}
-  \item A self-attention mechanism is just a block where the queries and keys are the same:
-    \[
-      \mathrm{SelfAttention}(Q, V) = \mathrm{Attention}(Q, Q, V)
-    \]
-
-   \item For each query $q_i$, self-attention places highest weight on values that correspond to $q_j$ which have a high dot-product with $q_i$.  
-    \end{itemize}
-    \end{frame}
-
-    \begin{frame}
-      \frametitle{Multihead Attention}
-      \begin{itemize}
-      \item An attention mechanism only uses the dot product of the entire length of a given query and key.
-      \item The Multihead mechanism projects queries, keys, and values into $h$-different subspaces.
-        \[
-          \begin{split}
-            MultiHead(Q, K, V) &= [H_i | \dots | H_h] W^O \\
-            H_i &= Attention(QW_i^Q, KW_i^K, VW_i^V) \\
-        \end{split}
-        \]
-      \item Queries and keys which are similar in one subspace may be different in another.
-      \item This allows mechanisms that can be based on different measures of similarity between queries and keys.
-       \item Output is same shape as the original Attention function.
-      \end{itemize}
-    \end{frame}
-
-    \begin{frame}
-      \frametitle{Multihead Attention - Example} 
+  \item Very unlikely to find two plays where $X_i$ is exactly the same
+    \item Solution is to match plays with propensity scores, defined as:
       \[
-        \begin{split}
-          q   &= [1, 1, 1, 1] \\
-          k   &= [1, 1, -1, -1]\\
-          W_1 &= \begin{bmatrix} I_2 \\ 0\end{bmatrix} \\
-          W_2 &= \begin{bmatrix} 0 \\ I_2\end{bmatrix} \\
-        \end{split}
+        e(X_i) = P(W_i=1 | X)
       \]
-      \begin{itemize}
-      \item $\langle q, k \rangle = 0$
-      \item $\langle qW_1, kW_1 \rangle = 2$
-      \item $\langle qW_2, kW_2 \rangle = -2$
-      \item More information about relationship between two vectors by comparing in subspaces.
-      \end{itemize}
-    \end{frame}
-
-\section{Attentive Neural Processes}
-
-\begin{frame}
-  \frametitle{Attentive Neural Processes} 
-  \begin{itemize}
-  \item As you may have guessed, the Attentive Neural Process (ANP) incorporates
-    attention mechanisms into the Neural Process.
-  \item Figure from ANP paper
-  \end{itemize}
-\includegraphics[width=\linewidth]{./anp/np_vs_anp.png}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Attentive Neural Processes - Deterministic Part} 
-  \begin{itemize}
-  \item The Deterministic part uses self-attention to encode a matrix of representations $R$ from each context point.
-  \item For a given $x_i, i \in T$, the representation $r_i^*$ is calculated using cross-attention.
-    % \begin{itemize}
-    \item   \(w_j \triangleq \mathrm{cat}(x_j, y_j)\)
-  \item \(X = [x_{j_1} | \dots | x_{j_n}], W = [w_{j_1} | \dots | w_{j_n}]\)  where $\{i_1, i_2, \dots, i_n\} = C$.
-    \item \(R = Multihead_\phi(W, W, V_\phi)\)
-    \item \(r_i^* = Multihead_\theta(x_i, X, R)\)
-    % \end{itemize}
-  % \item $r_i = Multihead_\theta(x_i, X, R)$
+    \item These scores are estimated with a logistic regression model with spline terms for continuous variables, along with some interation terms. (see Table 3 in Appendix)
+    \item Propensity scores are filtered out which are above maximum or below the minimum of either the treatment or control group.
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Attentive Neural Processes - Probabilistic Part} 
-  \begin{itemize}
-  \item The latent part uses self-attention to encode a single latent representation to capture global uncertainty in the function.    % \begin{itemize}
-  \item \(S = Multihead_\omega(W, W, V_\omega )\)
-  \item \(s_C = \left( \frac 1 {|C|} \right) 1^\top S\)
-  \item $z \sim p_Z(\cdot | s_C)$
-  \item Putting it all together, for a target index $i \in T$:
-    \[
-      p(y_i | x_i, \{(x_j, y_j) | j \in C\}) = \int p_Y(y_i | x_i, r_i^*, z) p_Z(z | s_C) dz
-    \]
-  \end{itemize}
+  \frametitle{Model covariates used in propensity scores}
+  \centering \includegraphics[width=\linewidth]{./covariates.png}
 \end{frame}
 
-\section{Empirical Results}
-
 \begin{frame}
-  \frametitle{Synthetic Experiment: 1-D Gaussian} 
+  \frametitle{Matching}
   \begin{itemize}
-  \item Generated data from a Gaussian Process with a squared-exponential kernel and small likelihood noise.
-  \item Two settings:
+  \item $1:1$ nearest neightbor matching treatments to the control group using four play characteristics:
     \begin{enumerate}
-    \item Fixed GP hyperparameters (i.e. one GP to learn)
-    \item Varying GP hyperparameters for each iteration (i.e. learning over many independently-realized GPs)
+    \item $\mathrm{logit}(e(X))$ : propensity scores
+    \item $\mathrm{logit}(wp)$ : pre-snap win probability
+    \item $ytg$ : yards to go
+    \item $time$ : number of minutes remaining in the game
     \end{enumerate}
-  \item No self-attention used in this simple 1-D case. Only cross-attention in the deterministic part of the encoder is used (only distiction from NP)
-    \item Compare to NP and different attention mechanisms for ANP.
+  \item Calipers set to exclude observations that don't have a match which is within a certain threshold for each variable. 
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Synthetic Experiment: 1-D Gaussian} 
-  \begin{itemize}
-  \item Context reconstruction error is the first term in the ELBO taken over context points: \( \sum_{i \in C} \mathbb E_{q(z | s_T)} \log p_y(y_i | x_i, r_i^*, z) \)
-  \item Negative log-likelihood (NLL) is the first term in the ELBO taken over target points: \( \sum_{i \in T} \mathbb E_{q(z | s_T)} \log p_y(y_i | x_i, r_i^*, z) \)
-  \end{itemize}
-  \includegraphics[width=\linewidth]{./anp/anp_1d.png}
+  \frametitle{Matching Performance}
+  \includegraphics[width=0.4\linewidth]{./pre_matching.png}
+  \includegraphics[width=0.4\linewidth]{./post_matching.png}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Real-data Experiment: Pixel-level image recovery} 
+  \frametitle{Matching Performance}
+  \centering \includegraphics[width=0.55\linewidth]{./love.png}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Findings}
   \begin{itemize}
-  \item Each $X_i$ is a 2D pixel location ($\mathbb R^2$)
-  \item Each $y_i$ is the values of the pixels ($\mathbb R^3$ for RGB).
-  \item Datasets: MNIST, CelebA
-  \item Different variants of ANP:
-    \begin{itemize}
-    \item Multihead ANP: Cross-attention in deterministic path (same as 1D example)
-    \item Stacked Multihead ANP: Multihead NAP $+$ two layers of stacked self-attention in latent and determininstic paths
+  \item Overall, teams that went for it have an average increase in win probability of $1.9 \%$.
+  \item The observed distribution of $ATC_i$ was bimodal, corresponding to whether a team is successful or not.
+  \end{itemize}
+  \centering  \includegraphics[width=0.4\linewidth]{./change_win_probability.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Findings}
+  \begin{column}{0.5\linewidth}
+      \includegraphics[width=\linewidth]{./team_wins.png} 
+    \end{column}
+    \begin{column}{0.5\linewidth}
+      \begin{itemize}
+      \item \small Plot shows estimated change in wins from 2004-2016 if teams always went for it when 4th Down Bot said to (based on matched outcome).
+      \item Team with highest number of expected increase in wins is Cleveland with 6.7.
+      \item Only for New England, Indianapolis, and New Orleans is it feasible that the more aggresive strategy would not increase win total (matches perceptions that their coaches make better decisions on fourth down)
+      \end{itemize}
+    \end{column}
+\end{frame}
+\begin{frame}
+  \frametitle{Discussion}
+  \begin{itemize}
+  \item It would make more sense to group by Head Coaches than Teams to account for differences in philosophy
+  \item It's hard to say that a coach isn't able to infer signal about $Y_i(1)$ and $Y_i(0)$ based on variables not in the covariates.
+  \end{itemize}
+  \end{frame}
+  \begin{frame}
+      \frametitle{Discussion}
+      
+      \begin{itemize}
+    \item This paper maybe suggests that Bill Belichick was right to go for it on fourth down against the Colts.
+      \begin{enumerate}
+      \item In 2005 against the Saints, New England faced ``a 4th-and-2, 68 yards from its own goal, 10 minutes into a tied game, and successfully completed a four-yard pass, resulting in a $Y=  \Delta wp = 8.5\%$''.
+      \item The increase in winning-percentage if New England had converted, $Y_i(1) | \{\text{converted}\}$, would likely have been higher. Indianapolis had one time-out and it would have been past the 2-minute warning.
+      \item With two minutes on the clock, playing against a red-hot Peyton Manning and Reggie Wayne, the difference between $Y_i(1) | \{\text{not converted}\}$ and $Y_i(0)$ might not have been that high.
+      \end{enumerate}
     \end{itemize}
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{Real-data Experiment: Pixel-level image recovery} 
-  \begin{itemize}
-  \item Even with most of the man's face given as context, NP predicts a woman's face. 
-  \item ANP converges to a lower error.
-  \end{itemize}
-  \includegraphics[width=\linewidth]{./anp/fig4.png}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Real-data Experiment: Pixel-level image recovery} 
-  \includegraphics[width=\linewidth]{./anp/fig5.png}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Real-data Experiment: Pixel-level image upscaling} 
-  \includegraphics[width=\linewidth]{./anp/fig6.png}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Thank you!}
-
-  We now turn to the discussion LaTeX document.
-\end{frame}
-
+    \end{frame}
 \end{document}
